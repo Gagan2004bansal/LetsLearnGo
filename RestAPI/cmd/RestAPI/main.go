@@ -12,19 +12,21 @@ import (
 	"time"
 
 	"github.com/Gagan2004bansal/LetsLearnGo/internal/config"
+	"github.com/Gagan2004bansal/LetsLearnGo/internal/http/handlers/student"
 )
 
 func main() {
 
 	// load config
 	cfg := config.MustLoad()
+
 	// database setup
+
 	// setup router
 	router := http.NewServeMux()
 
-	router.HandleFunc("GET /", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("Welcome to REST API"))
-	})
+	router.HandleFunc("POST /api/students", student.New())
+
 	// setup server
 	server := http.Server{
 		Addr:    cfg.Addr,
