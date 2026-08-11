@@ -13,6 +13,7 @@ import (
 
 	"github.com/Gagan2004bansal/LetsLearnGo/internal/config"
 	"github.com/Gagan2004bansal/LetsLearnGo/internal/http/handlers/student"
+	"github.com/Gagan2004bansal/LetsLearnGo/internal/storage/sqlite"
 )
 
 func main() {
@@ -21,11 +22,17 @@ func main() {
 	cfg := config.MustLoad()
 
 	// database setup
+	storage, errr := sqlite.New(cfg)
+	if errr != nil {
+		log.Fatal(errr)
+	}
+
+	slog.Info("storage initialize")
 
 	// setup router
 	router := http.NewServeMux()
 
-	router.HandleFunc("POST /api/students", student.New())
+	router.HandleFunc("POST /api/students", student.New(storage))
 
 	// setup server
 	server := http.Server{
