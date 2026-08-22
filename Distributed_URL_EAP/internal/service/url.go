@@ -4,15 +4,20 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"log/slog"
+	"sync"
 
 	"github.com/Gagan2004bansal/LetsLearnGo/internal/model"
 )
 
 type UrlService struct {
+	urls map[string]model.UrlDB
+	mu   sync.RWMutex
 }
 
 func NewUrlService() *UrlService {
-	return &UrlService{}
+	return &UrlService{
+		urls: make(map[string]model.UrlDB),
+	}
 }
 
 func getshortcode() string {
@@ -31,5 +36,17 @@ func (u *UrlService) CreateShortUrl(Url string) *model.ResUrl {
 
 	resp := model.NewShortUrl(Url, shortCode)
 
+	u.mu.Lock()
+	u.urls[shortCode] = *resp
+	u.mu.Unlock()
+
 	return resp.ToResponse()
+}
+
+func (u *UrlService) GetLongUrl(ShortCode string) (model.UrlDB, bool) {
+	u.mu.RLock()
+	defer u.mu.RUnlock()
+
+	url, exists := u.urls[ShortCode]
+	return url, exists
 }

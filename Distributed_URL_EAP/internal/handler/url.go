@@ -2,7 +2,6 @@ package handler
 
 import (
 	"encoding/json"
-	"log/slog"
 	"net/http"
 
 	"github.com/Gagan2004bansal/LetsLearnGo/internal/model"
@@ -20,6 +19,7 @@ func NewUrlHandler(urlService *service.UrlService) *UrlHandler {
 
 func (h *UrlHandler) UrlRoutes(router *mux.Router) {
 	router.HandleFunc("/url", h.CreateUrl).Methods(http.MethodPost)
+	router.HandleFunc("/url/{shortcode}", h.GetUrl).Methods(http.MethodGet)
 }
 
 func (h *UrlHandler) CreateUrl(w http.ResponseWriter, r *http.Request) {
@@ -27,6 +27,7 @@ func (h *UrlHandler) CreateUrl(w http.ResponseWriter, r *http.Request) {
 
 	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
 		http.Error(w, "invalid request body", http.StatusBadRequest)
+		return
 	}
 
 	if request.Url == "" {
@@ -34,12 +35,28 @@ func (h *UrlHandler) CreateUrl(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	slog.Info("Everything okay")
-
 	response := h.urlService.CreateShortUrl(request.Url)
 
 	w.Header().Set("content-type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 
 	json.NewEncoder(w).Encode(response)
+}
+
+func (h *UrlHandler) GetUrl(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	shortcode := vars["shortcode"]
+
+	if shortcode == "" {
+		http.Error(w, "invalid shorturl", http.StatusBadRequest)
+		return
+	}
+
+	url, exists := h.urlService.GetLongUrl(shortcode)
+	if !exists {
+		http.NotFound(w, r)
+		return
+	}
+
+	http.Redirect(w, r, url.Url, http.StatusFound)
 }
