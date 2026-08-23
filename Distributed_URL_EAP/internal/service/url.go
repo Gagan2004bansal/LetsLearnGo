@@ -32,7 +32,13 @@ func getshortcode() string {
 func (u *UrlService) CreateShortUrl(Url string) *model.ResUrl {
 	slog.Info("URL Service - CreateShortUrl")
 
-	shortCode := getshortcode()
+	shortCode := ""
+	for {
+		shortCode = getshortcode()
+		if _, ok := u.urls[shortCode]; ok == false {
+			break
+		}
+	}
 
 	resp := model.NewShortUrl(Url, shortCode)
 
@@ -46,7 +52,19 @@ func (u *UrlService) CreateShortUrl(Url string) *model.ResUrl {
 func (u *UrlService) GetLongUrl(ShortCode string) (model.UrlDB, bool) {
 	u.mu.RLock()
 	defer u.mu.RUnlock()
+	slog.Info("URL Service - GetShortUrl")
 
 	url, exists := u.urls[ShortCode]
 	return url, exists
+}
+
+func (u *UrlService) DeleteShortUrl(shortcode string) bool {
+	slog.Info("URL Service - DeleteShortUrl")
+	url, check := u.GetLongUrl(shortcode)
+	if !check {
+		return false
+	}
+
+	delete(u.urls, url.ShortCode)
+	return true
 }

@@ -20,6 +20,7 @@ func NewUrlHandler(urlService *service.UrlService) *UrlHandler {
 func (h *UrlHandler) UrlRoutes(router *mux.Router) {
 	router.HandleFunc("/url", h.CreateUrl).Methods(http.MethodPost)
 	router.HandleFunc("/url/{shortcode}", h.GetUrl).Methods(http.MethodGet)
+	router.HandleFunc("/url/{id}", h.DeleteUrl).Methods(http.MethodDelete)
 }
 
 func (h *UrlHandler) CreateUrl(w http.ResponseWriter, r *http.Request) {
@@ -48,7 +49,7 @@ func (h *UrlHandler) GetUrl(w http.ResponseWriter, r *http.Request) {
 	shortcode := vars["shortcode"]
 
 	if shortcode == "" {
-		http.Error(w, "invalid shorturl", http.StatusBadRequest)
+		http.Error(w, "empty shorturl", http.StatusBadRequest)
 		return
 	}
 
@@ -59,4 +60,24 @@ func (h *UrlHandler) GetUrl(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.Redirect(w, r, url.Url, http.StatusFound)
+}
+
+func (h *UrlHandler) DeleteUrl(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	shortcode := vars["id"]
+
+	if shortcode == "" {
+		http.Error(w, "empty shorturl", http.StatusBadRequest)
+		return
+	}
+
+	res := h.urlService.DeleteShortUrl(shortcode)
+
+	if !res {
+		http.NotFound(w, r)
+		return
+	}
+
+	w.Header().Set("content-type", "application/json")
+	w.WriteHeader(http.StatusAccepted)
 }
