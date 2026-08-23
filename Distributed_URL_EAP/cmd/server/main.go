@@ -1,19 +1,51 @@
 package main
 
 import (
+	"context"
 	"fmt"
-	"log"
-	"log/slog"
-	"net/http"
-
 	"github.com/Gagan2004bansal/LetsLearnGo/internal/config"
 	"github.com/Gagan2004bansal/LetsLearnGo/internal/handler"
+	"github.com/Gagan2004bansal/LetsLearnGo/internal/repository"
 	"github.com/Gagan2004bansal/LetsLearnGo/internal/service"
 	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
+	"log"
+	"log/slog"
+	"net/http"
 )
 
 func main() {
+
+	conn, err := repository.Connect()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	defer conn.Close(context.Background())
+
+	_, err = conn.Exec(
+		context.Background(),
+		`CREATE TABLE IF NOT EXISTS users (
+			id SERIAL PRIMARY KEY,
+			name TEXT NOT NULL
+		)`,
+	)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	_, err = conn.Exec(
+		context.Background(),
+		"INSERT INTO users (name) VALUES ($1), ($2)",
+		"Gagan",
+		"Rahul",
+	)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Fir retrieve
+	repository.QueryData(conn)
 
 	godotenv.Load()
 	cfg, error := config.Load()
