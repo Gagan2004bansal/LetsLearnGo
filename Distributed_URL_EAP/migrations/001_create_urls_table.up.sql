@@ -1,0 +1,9 @@
+
+
+CREATE TABLE urls (
+    id UUID PRIMARY KEY,
+    url TEXT NOT NULL,
+    clicked INT NOT NULL DEFAULT 0,
+    short_code VARCHAR(10) NOT NULL UNIQUE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);

@@ -1,22 +1,22 @@
 package service
 
 import (
+	"context"
 	"crypto/rand"
 	"encoding/base64"
 	"log/slog"
-	"sync"
 
 	"github.com/Gagan2004bansal/LetsLearnGo/internal/model"
+	"github.com/Gagan2004bansal/LetsLearnGo/internal/repository"
 )
 
 type UrlService struct {
-	urls map[string]model.UrlDB
-	mu   sync.RWMutex
+	repo repository.UrlRepository
 }
 
-func NewUrlService() *UrlService {
+func NewUrlService(repo repository.UrlRepository) *UrlService {
 	return &UrlService{
-		urls: make(map[string]model.UrlDB),
+		repo: repo,
 	}
 }
 
@@ -29,42 +29,72 @@ func getshortcode() string {
 	return base64.URLEncoding.EncodeToString(randomBytes)[:7]
 }
 
-func (u *UrlService) CreateShortUrl(Url string) *model.ResUrl {
+func (u *UrlService) CreateShortUrl(ctx context.Context, url string) (*model.ResUrl, error) {
 	slog.Info("URL Service - CreateShortUrl")
 
-	shortCode := ""
 	for {
-		shortCode = getshortcode()
-		if _, ok := u.urls[shortCode]; ok == false {
-			break
+		shortCode := getshortcode()
+
+		urlDB := model.NewShortUrl(url, shortCode)
+
+		err := u.repo.Create(ctx, urlDB)
+
+		if err == nil {
+			return urlDB.ToResponse(), nil
 		}
+
+		// If short code collided, we generate another one.
+		// For now we retry.
+		slog.Warn(
+			"failed to create URL, retrying",
+			"error", err,
+		)
 	}
-
-	resp := model.NewShortUrl(Url, shortCode)
-
-	u.mu.Lock()
-	u.urls[shortCode] = *resp
-	u.mu.Unlock()
-
-	return resp.ToResponse()
 }
 
-func (u *UrlService) GetLongUrl(ShortCode string) (model.UrlDB, bool) {
-	u.mu.RLock()
-	defer u.mu.RUnlock()
-	slog.Info("URL Service - GetShortUrl")
+func (u *UrlService) GetLongUrl(ctx context.Context, shortCode string) (*model.UrlDB, error) {
+	slog.Info(
+		"URL Service - GetLongUrl",
+		"shortcode",
+		shortCode,
+	)
 
-	url, exists := u.urls[ShortCode]
-	return url, exists
-}
+	url, err := u.repo.GetByShortCode(
+		ctx,
+		shortCode,
+	)
 
-func (u *UrlService) DeleteShortUrl(shortcode string) bool {
-	slog.Info("URL Service - DeleteShortUrl")
-	url, check := u.GetLongUrl(shortcode)
-	if !check {
-		return false
+	if err != nil {
+		return nil, err
 	}
 
-	delete(u.urls, url.ShortCode)
-	return true
+	return url, nil
+}
+
+func (u *UrlService) DeleteShortUrl(
+	ctx context.Context,
+	shortCode string,
+) error {
+
+	slog.Info(
+		"URL Service - DeleteShortUrl",
+		"shortcode",
+		shortCode,
+	)
+
+	return u.repo.DeleteByShortCode(
+		ctx,
+		shortCode,
+	)
+}
+
+func (u *UrlService) IncrementClicked(
+	ctx context.Context,
+	shortCode string,
+) error {
+
+	return u.repo.IncrementClicked(
+		ctx,
+		shortCode,
+	)
 }

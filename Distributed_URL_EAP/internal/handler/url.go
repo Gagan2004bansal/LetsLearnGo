@@ -2,9 +2,11 @@ package handler
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 
 	"github.com/Gagan2004bansal/LetsLearnGo/internal/model"
+	"github.com/Gagan2004bansal/LetsLearnGo/internal/repository"
 	"github.com/Gagan2004bansal/LetsLearnGo/internal/service"
 	"github.com/gorilla/mux"
 )
@@ -36,7 +38,11 @@ func (h *UrlHandler) CreateUrl(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response := h.urlService.CreateShortUrl(request.Url)
+	response, err := h.urlService.CreateShortUrl(r.Context(), request.Url)
+	if err != nil {
+		http.Error(w, "failed to create short url", http.StatusInternalServerError)
+		return
+	}
 
 	w.Header().Set("content-type", "application/json")
 	w.WriteHeader(http.StatusCreated)
@@ -53,9 +59,14 @@ func (h *UrlHandler) GetUrl(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	url, exists := h.urlService.GetLongUrl(shortcode)
-	if !exists {
+	url, err := h.urlService.GetLongUrl(r.Context(), shortcode)
+	if errors.Is(err, repository.ErrURLNotFound) {
 		http.NotFound(w, r)
+		return
+	}
+
+	if err != nil {
+		http.Error(w, "failed to get url", http.StatusInternalServerError)
 		return
 	}
 
@@ -71,10 +82,15 @@ func (h *UrlHandler) DeleteUrl(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res := h.urlService.DeleteShortUrl(shortcode)
+	err := h.urlService.DeleteShortUrl(r.Context(), shortcode)
 
-	if !res {
+	if errors.Is(err, repository.ErrURLNotFound) {
 		http.NotFound(w, r)
+		return
+	}
+
+	if err != nil {
+		http.Error(w, "failed to delete url", http.StatusInternalServerError)
 		return
 	}
 

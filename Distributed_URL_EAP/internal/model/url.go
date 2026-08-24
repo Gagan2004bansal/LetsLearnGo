@@ -1,6 +1,10 @@
 package model
 
-import "time"
+import (
+	"time"
+
+	"github.com/google/uuid"
+)
 
 type UrlDB struct {
 	Id        string
@@ -21,10 +25,12 @@ type ResUrl struct {
 	CreatedAt time.Time `json:"created_at"`
 }
 
-func NewShortUrl(Url string, ShortCode string) *UrlDB {
+func NewShortUrl(url string, shortCode string) *UrlDB {
 	return &UrlDB{
-		Url:       Url,
-		ShortCode: ShortCode,
+		Id:        uuid.New().String(),
+		Url:       url,
+		Clicked:   0,
+		ShortCode: shortCode,
 		CreatedAt: time.Now(),
 	}
 }
