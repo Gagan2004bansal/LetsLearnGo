@@ -70,6 +70,11 @@ func (h *UrlHandler) GetUrl(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Clicked Count in PostgreSQL
+	if err := h.urlService.IncrementClicked(r.Context(), shortcode); err != nil {
+		http.Error(w, "failed to update click count", http.StatusInternalServerError)
+	}
+
 	http.Redirect(w, r, url.Url, http.StatusFound)
 }
 
