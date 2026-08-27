@@ -15,16 +15,19 @@ type UrlHandler struct {
 	urlService *service.UrlService
 }
 
+// Constructor to initialize the services it uses
 func NewUrlHandler(urlService *service.UrlService) *UrlHandler {
 	return &UrlHandler{urlService: urlService}
 }
 
+// Exposes the route that this current handler handles
 func (h *UrlHandler) UrlRoutes(router *mux.Router) {
 	router.HandleFunc("/url", h.CreateUrl).Methods(http.MethodPost)
 	router.HandleFunc("/url/{shortcode}", h.GetUrl).Methods(http.MethodGet)
 	router.HandleFunc("/url/{id}", h.DeleteUrl).Methods(http.MethodDelete)
 }
 
+// Handler - 1 : help us to create a short url from long url
 func (h *UrlHandler) CreateUrl(w http.ResponseWriter, r *http.Request) {
 	var request model.ReqUrl
 
@@ -50,6 +53,7 @@ func (h *UrlHandler) CreateUrl(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 }
 
+// Handler - 2 : help us to redirect from a short url to actual long url
 func (h *UrlHandler) GetUrl(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	shortcode := vars["shortcode"]
@@ -78,6 +82,7 @@ func (h *UrlHandler) GetUrl(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, url.Url, http.StatusFound)
 }
 
+// Handler - 3 : help us to delete the record for our long url
 func (h *UrlHandler) DeleteUrl(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	shortcode := vars["id"]

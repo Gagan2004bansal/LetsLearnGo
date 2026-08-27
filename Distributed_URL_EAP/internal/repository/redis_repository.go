@@ -9,6 +9,7 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
+// Interface of cache for abstraction
 type RedisRepository interface {
 	GetShortCode(ctx context.Context, shortCose string) (*model.UrlDB, error)
 	SetShortCode(ctx context.Context, url *model.UrlDB) error
@@ -19,12 +20,14 @@ type RedisUrlRepository struct {
 	rdb *redis.Client
 }
 
+// Constructor to initialize the redis instance
 func NewRedisUrlRepository(rdb *redis.Client) *RedisUrlRepository {
 	return &RedisUrlRepository{
 		rdb: rdb,
 	}
 }
 
+// Function to get shortcode in cache
 func (r *RedisUrlRepository) GetShortCode(ctx context.Context, shortCode string) (*model.UrlDB, error) {
 	value, err := r.rdb.Get(
 		ctx,
@@ -53,6 +56,7 @@ func (r *RedisUrlRepository) GetShortCode(ctx context.Context, shortCode string)
 	return &url, nil
 }
 
+// Function to set shortcode in cache
 func (r *RedisUrlRepository) SetShortCode(ctx context.Context, url *model.UrlDB) error {
 	value, err := json.Marshal(url)
 	if err != nil {
@@ -62,6 +66,7 @@ func (r *RedisUrlRepository) SetShortCode(ctx context.Context, url *model.UrlDB)
 	return r.rdb.Set(ctx, url.ShortCode, value, 0).Err()
 }
 
+// Function to delete shortcode in cache
 func (r *RedisUrlRepository) DeleteShortCode(ctx context.Context, shortCode string) error {
 	return r.rdb.Del(ctx, shortCode).Err()
 }
