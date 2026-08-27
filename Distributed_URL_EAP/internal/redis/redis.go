@@ -7,6 +7,7 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
+// Function to connect redis
 func ConnectRedis() (*redis.Client, error) {
 
 	rdb := redis.NewClient(&redis.Options{

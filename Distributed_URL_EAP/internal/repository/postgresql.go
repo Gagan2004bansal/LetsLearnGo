@@ -7,6 +7,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
+// Function to connect postgreSQL database
 func Connect() (*pgxpool.Pool, error) {
 	pool, err := pgxpool.New(
 		context.Background(),

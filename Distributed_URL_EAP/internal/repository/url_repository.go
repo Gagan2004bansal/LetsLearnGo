@@ -9,8 +9,10 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
+// Common Error Variable
 var ErrURLNotFound = errors.New("url not found")
 
+// Interface of persistence for abstraction
 type UrlRepository interface {
 	Create(ctx context.Context, url *model.UrlDB) error
 	GetByShortCode(ctx context.Context, shortCode string) (*model.UrlDB, error)
@@ -22,12 +24,14 @@ type PostgresUrlRepository struct {
 	db *pgxpool.Pool
 }
 
+// Constructor to initialize the postgreSQL db instance
 func NewPostgresUrlRepository(db *pgxpool.Pool) *PostgresUrlRepository {
 	return &PostgresUrlRepository{
 		db: db,
 	}
 }
 
+// Function to store the record in persistence db
 func (r *PostgresUrlRepository) Create(
 	ctx context.Context,
 	url *model.UrlDB,
@@ -57,6 +61,7 @@ func (r *PostgresUrlRepository) Create(
 	return err
 }
 
+// Function to get the record from persistence db
 func (r *PostgresUrlRepository) GetByShortCode(
 	ctx context.Context,
 	shortCode string,
@@ -98,6 +103,7 @@ func (r *PostgresUrlRepository) GetByShortCode(
 	return &url, nil
 }
 
+// Function to delete the record in persistence db
 func (r *PostgresUrlRepository) DeleteByShortCode(
 	ctx context.Context,
 	shortCode string,
@@ -125,6 +131,7 @@ func (r *PostgresUrlRepository) DeleteByShortCode(
 	return nil
 }
 
+// Function to increment the record click in persistence db
 func (r *PostgresUrlRepository) IncrementClicked(
 	ctx context.Context,
 	shortCode string,

@@ -15,6 +15,7 @@ type UrlService struct {
 	redisRepo repository.RedisRepository
 }
 
+// Constructor to initialize the repository (database, cache)
 func NewUrlService(repo repository.UrlRepository, redisRepo repository.RedisRepository) *UrlService {
 	return &UrlService{
 		repo:      repo,
@@ -22,6 +23,7 @@ func NewUrlService(repo repository.UrlRepository, redisRepo repository.RedisRepo
 	}
 }
 
+// Function to generate the 7 byte code
 func getshortcode() string {
 	randomBytes := make([]byte, 7)
 	_, err := rand.Read(randomBytes)
@@ -31,6 +33,7 @@ func getshortcode() string {
 	return base64.URLEncoding.EncodeToString(randomBytes)[:7]
 }
 
+// Function to create the shortcode and request to repository for persistence
 func (u *UrlService) CreateShortUrl(ctx context.Context, url string) (*model.ResUrl, error) {
 	slog.Info("URL Service - CreateShortUrl")
 
@@ -39,6 +42,7 @@ func (u *UrlService) CreateShortUrl(ctx context.Context, url string) (*model.Res
 
 		urlDB := model.NewShortUrl(url, shortCode)
 
+		// Storing a record in persistence db
 		err := u.repo.Create(ctx, urlDB)
 
 		if err != nil {
@@ -46,6 +50,7 @@ func (u *UrlService) CreateShortUrl(ctx context.Context, url string) (*model.Res
 			continue
 		}
 
+		// Storing in Redis
 		err = u.redisRepo.SetShortCode(ctx, urlDB)
 
 		if err != nil {
@@ -58,6 +63,7 @@ func (u *UrlService) CreateShortUrl(ctx context.Context, url string) (*model.Res
 	}
 }
 
+// Function to get the actual url from repository (cache -> database)
 func (u *UrlService) GetLongUrl(ctx context.Context, shortCode string) (*model.UrlDB, error) {
 	slog.Info("URL Service - GetLongUrl", "shortcode", shortCode)
 
@@ -89,6 +95,7 @@ func (u *UrlService) GetLongUrl(ctx context.Context, shortCode string) (*model.U
 	return url, nil
 }
 
+// Function to delete the url record from repository (database -> cache)
 func (u *UrlService) DeleteShortUrl(
 	ctx context.Context,
 	shortCode string,
@@ -118,6 +125,7 @@ func (u *UrlService) DeleteShortUrl(
 	return nil
 }
 
+// Function to increment the count for how many times a shorturl clicked in persistence db
 func (u *UrlService) IncrementClicked(
 	ctx context.Context,
 	shortCode string,
